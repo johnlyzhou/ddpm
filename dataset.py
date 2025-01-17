@@ -6,14 +6,12 @@ from torch.utils.data import Dataset
 class FilteredMNIST(Dataset):
     def __init__(self, root, label, train=True, transform=None, download=True):
         """
-        Initialize the dataset by filtering for the specified label.
-
-        Args:
-            root (str): Path to save/load the MNIST dataset.
-            label (int): The label to filter (0-9).
-            train (bool): Whether to use the training set. Defaults to True.
-            transform (callable, optional): A function/transform to apply to the images.
-            download (bool): Whether to download the dataset if it does not exist. Defaults to True.
+        MNIST dataset filtered for a specific label and only returning the images (no labels).
+        :param root: Path to save/load the MNIST dataset.
+        :param label: Selected label to keep.
+        :param train: Whether to use the training set. Defaults to True.
+        :param transform: A function/transform to apply to the images (they will be normalized to [-1, 1] for diffusion).
+        :param download: Whether to download the dataset if it does not exist. Defaults to True.
         """
         self.label = label
         self.transform = transform
