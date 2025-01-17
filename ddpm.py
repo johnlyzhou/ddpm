@@ -22,7 +22,7 @@ class DDPM(L.LightningModule):
         config = {
             "num_channels": 1,
             "image_size": 28,
-            "num_timesteps": 25,
+            "num_timesteps": 1000,
             "noise_schedule": "linear",
             "beta_min": 1e-4,
             "beta_max": 0.02
@@ -50,7 +50,7 @@ class DDPM(L.LightningModule):
         self.register_buffer("posterior_variance", self.betas * (1 - alphas_cumprod_prev) / (1 - self.alphas_cumprod))
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        return torch.optim.Adam(self.net.parameters(), lr=1e-4)
+        return torch.optim.Adam(self.net.parameters(), lr=1e-3)
 
     @torch.no_grad()
     def diffuse(self, x_0, t):

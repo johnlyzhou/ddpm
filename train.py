@@ -7,12 +7,12 @@ from ddpm import DDPM, SampleCallback
 
 if __name__ == "__main__":
     # Create a FilteredMNIST dataset for the digit 7
-    dataset = FilteredMNIST(root="./data", label=7, transform=torchvision.transforms.ToTensor(), download=True)
-    train_loader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=4)
+    dataset = FilteredMNIST(root="./data", label=6, transform=torchvision.transforms.ToTensor(), download=True)
+    train_loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4)
 
     # Print the number of samples in the dataset
     print(f"Number of samples: {len(dataset)}")
     
     model = DDPM()
-    trainer = L.Trainer(max_epochs=100, callbacks=[SampleCallback()])
+    trainer = L.Trainer(max_epochs=100)
     trainer.fit(model=model, train_dataloaders=train_loader)

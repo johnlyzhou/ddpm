@@ -94,8 +94,7 @@ class UNet(nn.Module):
         self.in_channels = in_chans
         self.encoder_channels = (64, 128, 256)
         self.decoder_channels = (256, 128, 64)
-        self.time_embed_dim = 32
-
+        self.time_embed_dim = 256 
 
         self.time_embedding = nn.Sequential(
             SinusoidalPositionalEmbedding(self.time_embed_dim),
