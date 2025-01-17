@@ -1,36 +1,21 @@
 import torch
 import torch.nn.functional as F
 import lightning as L
-from lightning import Trainer, LightningModule
-from lightning.pytorch.callbacks import Callback
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
 
 from networks import UNet
 from utils import make_broadcastable, linear_schedule, cosine_schedule, grayscale_to_pil
 
 
-class SampleCallback(Callback):
-    def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
-        sample_image = pl_module.sample(1).squeeze()
-        grayscale_to_pil(sample_image).show()
-
-
 class DDPM(L.LightningModule):
     """A simplified implementation of Denoising Diffusion Probabilistic Model (DDPM; Ho et al., 2022)."""
-    def __init__(self):
+    def __init__(self, config: dict):
         super().__init__()
-        config = {
-            "num_channels": 1,
-            "image_size": 28,
-            "num_timesteps": 1000,
-            "noise_schedule": "linear",
-            "beta_min": 1e-4,
-            "beta_max": 0.02
-        }
+        self.save_hyperparameters(config)
         self.num_channels = config["num_channels"]
-        self.net = UNet(self.num_channels)
         self.image_size = config["image_size"]
         self.num_timesteps = config["num_timesteps"]
+        self.lr = config["learning_rate"]
 
         if config["noise_schedule"] == 'linear':
             self.register_buffer("betas", linear_schedule(config["beta_min"], config["beta_max"], self.num_timesteps))
@@ -38,19 +23,22 @@ class DDPM(L.LightningModule):
             self.register_buffer("betas", cosine_schedule(config["beta_min"], config["beta_max"], self.num_timesteps))
 
         # Precompute some fixed values
-        self.register_buffer("alphas", 1 - self.betas)
+        alphas = 1 - self.betas
         # For training: see Algorithm 1
-        self.register_buffer("alphas_cumprod", torch.cumprod(self.alphas, dim=0))
+        self.register_buffer("alphas_cumprod", torch.cumprod(alphas, dim=0))
         self.register_buffer("sqrt_alphas_cumprod", torch.sqrt(self.alphas_cumprod))
         self.register_buffer("sqrt_one_minus_alphas_cumprod", torch.sqrt(1 - self.alphas_cumprod))
         # For sampling: see Algorithm 2
-        self.register_buffer("reciprocal_sqrt_alphas", 1.0 / self.alphas)
+        self.register_buffer("reciprocal_sqrt_alphas", 1.0 / alphas)
         alphas_cumprod_prev = F.pad(self.alphas_cumprod[:-1], (1, 0), value=1.0)
         # See Section 3.2
         self.register_buffer("posterior_variance", self.betas * (1 - alphas_cumprod_prev) / (1 - self.alphas_cumprod))
 
+        # Define model
+        self.net = UNet(self.num_channels)
+
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        return torch.optim.Adam(self.net.parameters(), lr=1e-3)
+        return torch.optim.Adam(self.net.parameters(), lr=self.lr)
 
     @torch.no_grad()
     def diffuse(self, x_0, t):
@@ -95,7 +83,7 @@ class DDPM(L.LightningModule):
                                                           x_t.shape)
         posterior_mean = (x_t - noise_hat) * make_broadcastable(self.reciprocal_sqrt_alphas[t], x_t.shape)
 
-        if torch.any(t == 0):
+        if torch.all(t == 0):
             return posterior_mean
         else:
             posterior_noise = (make_broadcastable(self.posterior_variance[t], x_t.shape) *
