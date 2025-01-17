@@ -68,10 +68,6 @@ class DDPM(L.LightningModule):
         self.log("train_loss", loss, prog_bar=True)
         return loss
 
-    def validation_step(self, batch):
-        sample_image = self.sample(1).squeeze()
-        grayscale_to_pil(sample_image).show()
-
     @torch.no_grad()
     def reverse_step(self, x_t, t):
         """
