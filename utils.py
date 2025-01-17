@@ -27,7 +27,6 @@ def grayscale_to_pil(image_tensor):
     Convert a grayscale image tensor in the range [-1, 1] to a PIL image.
     :param image_tensor: A 2D tensor (H, W) or 3D tensor (1, H, W) with values in the range [-1, 1].
     """
-    # Ensure the tensor is 2D (H, W)
     if image_tensor.dim() == 3 and image_tensor.size(0) == 1:
         image_tensor = image_tensor.squeeze(0)
     elif image_tensor.dim() != 2:
@@ -37,9 +36,6 @@ def grayscale_to_pil(image_tensor):
     image_tensor = (image_tensor + 1) * 255 / 2
     image_tensor = image_tensor.clamp(0, 255).byte()
 
-    # Convert to a NumPy array
     image_array = image_tensor.cpu().numpy()
-
-    # Convert to a PIL image
     pil_image = Image.fromarray(image_array, mode='L')  # 'L' for grayscale
     return pil_image
