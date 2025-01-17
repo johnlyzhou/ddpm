@@ -15,6 +15,9 @@ config = {
     "beta_min": 1e-4,
     "beta_max": 0.02,
     "learning_rate": 1e-3,
+    "time_embed_dim": 256,
+    "encoder_channels": (64, 128, 256),
+    "decoder_channels": (256, 128, 64),
 }
 
 if __name__ == "__main__":

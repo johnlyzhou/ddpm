@@ -35,7 +35,10 @@ class DDPM(L.LightningModule):
         self.register_buffer("posterior_variance", self.betas * (1 - alphas_cumprod_prev) / (1 - self.alphas_cumprod))
 
         # Define model
-        self.net = UNet(self.num_channels)
+        self.net = UNet(self.num_channels,
+                        config["encoder_channels"],
+                        config["decoder_channels"],
+                        config["time_embed_dim"])
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
         return torch.optim.Adam(self.net.parameters(), lr=self.lr)

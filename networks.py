@@ -89,12 +89,12 @@ class UNet(nn.Module):
     """
     A simplified U-Net which additionally takes in a diffusion timestep t as input to every encoder/decoder block.
     """
-    def __init__(self, in_chans: int):
+    def __init__(self, in_chans: int, encoder_chans: tuple, decoder_chans: tuple, time_embed_dim: int):
         super(UNet, self).__init__()
         self.in_channels = in_chans
-        self.encoder_channels = (64, 128, 256)
-        self.decoder_channels = (256, 128, 64)
-        self.time_embed_dim = 256 
+        self.encoder_channels = encoder_chans
+        self.decoder_channels = decoder_chans
+        self.time_embed_dim = time_embed_dim
 
         self.time_embedding = nn.Sequential(
             SinusoidalPositionalEmbedding(self.time_embed_dim),
@@ -133,13 +133,18 @@ class UNet(nn.Module):
 
 
 if __name__ == '__main__':
-    # Test UNet
+    # Verify inputs and outputs are the same shape (since MaxPool has a stride of 2, the output shape is halved
+    #  after each encoder block and so the input height and width should each be divisible by 2^len(encoder_chans)).
     bsz = 2
-    num_chans = 1
+    num_input_chans = 1
+    input_height = 28
+    input_width = 28
+    encoder_chans = (64, 128, 256)
+    decoder_chans = (256, 128, 64)
+    time_embed_dim = 256
     max_diffusion_timesteps = 100
-    net = UNet(num_chans)
-    test_x = torch.randn(bsz, num_chans, 28, 28)
+    net = UNet(num_input_chans, encoder_chans, decoder_chans, time_embed_dim)
+    test_x = torch.randn(bsz, num_input_chans, input_height, input_width)
     test_t = torch.randint(max_diffusion_timesteps, (bsz,))
     y = net(test_x, test_t)
-    print(y.shape)
-
+    assert(y.shape == test_x.shape, f"Expected output shape {test_x.shape} but got {y.shape} - check comments in main.")
