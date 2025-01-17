@@ -17,8 +17,16 @@ class SampleCallback(Callback):
 
 class DDPM(L.LightningModule):
     """A simplified implementation of Denoising Diffusion Probabilistic Model (DDPM; Ho et al., 2022)."""
-    def __init__(self, config):
+    def __init__(self):
         super().__init__()
+        config = {
+            "num_channels": 1,
+            "image_size": 28,
+            "num_timesteps": 25,
+            "noise_schedule": "linear",
+            "beta_min": 1e-4,
+            "beta_max": 0.02
+        }
         self.num_channels = config["num_channels"]
         self.net = UNet(self.num_channels)
         self.image_size = config["image_size"]
@@ -87,7 +95,7 @@ class DDPM(L.LightningModule):
                                                           x_t.shape)
         posterior_mean = (x_t - noise_hat) * make_broadcastable(self.reciprocal_sqrt_alphas[t], x_t.shape)
 
-        if t == 0:
+        if torch.any(t == 0):
             return posterior_mean
         else:
             posterior_noise = (make_broadcastable(self.posterior_variance[t], x_t.shape) *
